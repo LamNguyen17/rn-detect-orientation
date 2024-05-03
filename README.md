@@ -1,6 +1,4 @@
-# rn-orientation
-
-React Native Orientation
+# React Native Orientation
 
 ## 🚀 Author: Forest Nguyen
 Curently, works on Android
@@ -8,7 +6,7 @@ Curently, works on Android
 ## 🚀 Installation
 
 ```sh
-npm install rn-orientation
+npm install rn-detect-orientation
 ```
 
 ## 🚀 Usage
