@@ -1,14 +1,17 @@
 # rn-orientation
 
-orientation
+React Native Orientation
 
-## Installation
+## 🚀 Author: Forest Nguyen
+Curently, works on Android
+
+## 🚀 Installation
 
 ```sh
 npm install rn-orientation
 ```
 
-## Usage
+## 🚀 Usage
 
 ```js
 import { multiply } from 'rn-orientation';
@@ -18,14 +21,13 @@ import { multiply } from 'rn-orientation';
 const result = await multiply(3, 7);
 ```
 
-## Contributing
+## 🚀 Contributing
 
 See the [contributing guide](CONTRIBUTING.md) to learn how to contribute to the repository and the development workflow.
 
-## License
+## 🚀 License
 
-MIT
+    MIT License
+    Copyright (c) 2024 Forest Nguyen
 
 ---
-
-Made with [create-react-native-library](https://github.com/callstack/react-native-builder-bob)
