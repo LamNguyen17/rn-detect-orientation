@@ -11,12 +11,12 @@ npm install rn-detect-orientation
 
 ## 🚀 Usage
 
-```js
-import { multiply } from 'rn-orientation';
-
-// ...
-
-const result = await multiply(3, 7);
+```ts
+import { getInitialOrientation, getOrientation } from 'rn-detect-orientation';
+let initialOrientation = Orientation.getInitialOrientation();
+let orientation = Orientation.getOrientation((orient: string)=> {
+  return orient;
+});
 ```
 
 ## 🚀 Contributing
