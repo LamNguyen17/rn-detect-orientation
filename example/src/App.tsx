@@ -1,16 +1,21 @@
 import { useEffect, useState } from 'react';
-import { StyleSheet, View, Text, NativeEventEmitter, NativeModules, Button, TouchableOpacity } from 'react-native';
+import { StyleSheet, View, Text, NativeEventEmitter, NativeModules, Button } from 'react-native';
 import Orientation, { multiply } from 'rn-detect-orientation';
+import { useDeviceOrientationChange } from './useDeviceOrientationChange';
 
 export default function App() {
-  const [result, setResult] = useState<number | undefined>();
+  const [result, setResult] = useState<number|undefined>();
   const [orient, setOrient] = useState<string>();
   const [isLocked, setLocked] = useState<boolean>(false);
-  const [sendValue, setValue] = useState<string | null>(null);
+  const [sendValue, setValue] = useState<string|null>(null);
 
   useEffect(() => {
     multiply(3, 7).then(setResult);
   }, []);
+
+  useDeviceOrientationChange((event) => {
+    setOrient(`${event}`);
+  });
 
   useEffect(() => {
     Orientation.addOrientationListener(onOrientationDidUpdate);
@@ -21,6 +26,7 @@ export default function App() {
 
   const onOrientationDidUpdate = (event) => {
     console.log('onOrientationDidUpdate:', event);
+    setOrient(`${event}`);
   };
 
   useEffect(() => {
