@@ -1,6 +1,6 @@
 {
   "name": "rn-detect-orientation",
-  "version": "0.1.0",
+  "version": "0.1.11",
   "description": "React Native Orientation",
   "main": "lib/commonjs/index",
   "module": "lib/module/index",

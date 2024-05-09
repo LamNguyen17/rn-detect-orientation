@@ -1,12 +1,14 @@
-import { NativeModules, Platform } from 'react-native';
+import { NativeEventEmitter, NativeModules, Platform } from 'react-native';
 
+const ORIENTATION_DID_UPDATE = 'orientationDidUpdate';
+
+let isOrientationLocked = false;
 const LINKING_ERROR =
-  `The package 'rn-orientation' doesn't seem to be linked. Make sure: \n\n` +
+  `The package 'react-native-otp-verify' doesn't seem to be linked. Make sure: \n\n` +
   Platform.select({ ios: '- You have run \'pod install\'\n', default: '' }) +
   '- You rebuilt the app after installing the package\n' +
-  '- You are not using Expo Go\n';
-
-const RnOrientation = NativeModules.RnOrientation
+  '- You are not using Expo managed workflow\n';
+const RnOrientationNative = NativeModules.RnOrientation
   ? NativeModules.RnOrientation
   : new Proxy(
     {},
@@ -16,20 +18,46 @@ const RnOrientation = NativeModules.RnOrientation
       },
     },
   );
+const eventEmitter = new NativeEventEmitter(RnOrientationNative);
+
 
 export function multiply(a: number, b: number): Promise<number> {
-  return RnOrientation.multiply(a, b);
+  return RnOrientationNative.multiply(a, b);
 }
 
 export default class Orientation {
+  static isLocked = () => {
+    return isOrientationLocked;
+  };
+
   static getOrientation = (cb: any) => {
-    return RnOrientation.getOrientation((orientation: string)=> {
+    return RnOrientationNative.getOrientation((orientation: string) => {
       cb(orientation);
     });
   };
 
   static getInitialOrientation = () => {
-    const { initialOrientation } = RnOrientation.getConstants();
+    const { initialOrientation } = RnOrientationNative.getConstants();
     return initialOrientation;
   };
+
+  static requestEnableOrientations = () => {
+    isOrientationLocked = false;
+    return RnOrientationNative.enableScreenOrientation();
+  };
+
+  static getSendEvent = () => {
+    return RnOrientationNative.sendEvent();
+  };
+
+  static addOrientationListener = (cb: any) => {
+    return eventEmitter.addListener(ORIENTATION_DID_UPDATE, (body) => {
+      cb(body.orientation);
+    });
+  };
+
+  static removeOrientationListener = () => {
+    return eventEmitter.removeAllListeners(ORIENTATION_DID_UPDATE);
+  };
+
 }
