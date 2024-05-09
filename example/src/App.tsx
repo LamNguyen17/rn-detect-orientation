@@ -1,7 +1,6 @@
 import { useEffect, useState } from 'react';
-import { StyleSheet, View, Text, NativeEventEmitter, NativeModules, Button } from 'react-native';
+import { StyleSheet, View, Text, NativeEventEmitter, NativeModules, Button, TouchableOpacity } from 'react-native';
 import Orientation, { multiply } from 'rn-detect-orientation';
-let eventEmitter = new NativeEventEmitter(NativeModules.RnOrientation);
 
 export default function App() {
   const [result, setResult] = useState<number | undefined>();
@@ -12,6 +11,17 @@ export default function App() {
   useEffect(() => {
     multiply(3, 7).then(setResult);
   }, []);
+
+  useEffect(() => {
+    Orientation.addOrientationListener(onOrientationDidUpdate);
+    return () => {
+      Orientation.removeOrientationListener();
+    };
+  }, []);
+
+  const onOrientationDidUpdate = (event) => {
+    console.log('onOrientationDidUpdate:', event);
+  };
 
   useEffect(() => {
     let initialOrientation = Orientation.getInitialOrientation();
@@ -29,7 +39,7 @@ export default function App() {
     console.log('getSendEvent:');
     const eventEmitter = new NativeEventEmitter(NativeModules.RnOrientation);
     eventEmitter.addListener('onSessionConnect', event => {
-      console.log(event.sessionId) // "someValue"
+      console.log(event.sessionId); // "someValue"
     });
   };
 
@@ -38,8 +48,7 @@ export default function App() {
     if (locked !== isLocked) {
       setLocked(locked);
     }
-  }
-
+  };
 
   return (
     <View style={styles.container}>
@@ -48,18 +57,13 @@ export default function App() {
       <Button onPress={onPress}
               title={'Press receive event by Native'}>
       </Button>
-      <View style={{ marginTop: 10 }}>
-        {sendValue ? <Text>Send Value: {sendValue}</Text> : null}
-      </View>
-      <TouchableOpacity
-        activeOpacity={0.9}
-        onPress={() => {
-          Orientation.lockToPortrait();
-          checkLocked();
-        }}
-        style={styles.button}>
-        <Text>Enable Screen Orientation</Text>
-      </TouchableOpacity>
+
+      <Button onPress={() => {
+        Orientation.requestEnableOrientations();
+        checkLocked();
+      }}
+              title={'Enable Screen Orientation'}>
+      </Button>
     </View>
   );
 }
