@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
 import { StyleSheet, View, Text, NativeEventEmitter, NativeModules, Button } from 'react-native';
-import Orientation, { multiply } from 'rn-detect-orientation';
+import Orientation from 'rn-detect-orientation';
 import { useDeviceOrientationChange } from './useDeviceOrientationChange';
 
 export default function App() {
@@ -8,10 +8,6 @@ export default function App() {
   const [orient, setOrient] = useState<string>();
   const [isLocked, setLocked] = useState<boolean>(false);
   const [sendValue, setValue] = useState<string|null>(null);
-
-  useEffect(() => {
-    multiply(3, 7).then(setResult);
-  }, []);
 
   useDeviceOrientationChange((event) => {
     setOrient(`${event}`);
@@ -40,15 +36,6 @@ export default function App() {
     setValue(event);
   };
 
-  const onPress = () => {
-    Orientation.getSendEvent();
-    console.log('getSendEvent:');
-    const eventEmitter = new NativeEventEmitter(NativeModules.RnOrientation);
-    eventEmitter.addListener('onSessionConnect', event => {
-      console.log(event.sessionId); // "someValue"
-    });
-  };
-
   const checkLocked = () => {
     const locked = Orientation.isLocked();
     if (locked !== isLocked) {
@@ -58,12 +45,7 @@ export default function App() {
 
   return (
     <View style={styles.container}>
-      <Text>Result: {result}</Text>
       <Text>Result: {orient}</Text>
-      <Button onPress={onPress}
-              title={'Press receive event by Native'}>
-      </Button>
-
       <Button onPress={() => {
         Orientation.requestEnableOrientations();
         checkLocked();

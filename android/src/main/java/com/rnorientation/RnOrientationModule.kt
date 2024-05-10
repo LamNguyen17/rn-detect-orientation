@@ -1,6 +1,5 @@
 package com.rnorientation
 
-import android.annotation.SuppressLint
 import android.content.BroadcastReceiver
 import android.content.Context
 import android.content.Intent
@@ -17,7 +16,6 @@ import com.facebook.common.logging.FLog
 import com.facebook.react.bridge.Arguments
 import com.facebook.react.bridge.Callback
 import com.facebook.react.bridge.LifecycleEventListener
-import com.facebook.react.bridge.Promise
 import com.facebook.react.bridge.ReactApplicationContext
 import com.facebook.react.bridge.ReactContext
 import com.facebook.react.bridge.ReactContextBaseJavaModule
@@ -31,7 +29,6 @@ class RnOrientationModule(reactContext: ReactApplicationContext) :
   ReactContextBaseJavaModule(reactContext), LifecycleEventListener {
   private var lastOrientationValue = ""
   private var isLocked = false
-  private var mOrientationListener: OrientationListener? = null
   private val mReactContext = reactContext
 
   private companion object {
@@ -42,12 +39,23 @@ class RnOrientationModule(reactContext: ReactApplicationContext) :
     const val ORIENTATION_DID_UPDATE = "orientationDidUpdate"
   }
 
-  private val mTestOrientationListener =
+  private val mOrientationListener =
     object : OrientationEventListener(mReactContext, SensorManager.SENSOR_DELAY_UI) {
-      @SuppressLint("LongLogTag")
       override fun onOrientationChanged(orientation: Int) {
-//        Log.i("OrientationEventListener", "$orientation");
-//        showToast("Orientation Received Test : $orientation")
+        if (orientation < 0) {
+          return  // Flip screen, Not take account
+        }
+        lastOrientationValue = if (orientation <= 45) {
+          PORTRAIT
+        } else if (orientation <= 135) {
+          LANDSCAPE
+        } else if (orientation <= 225) {
+          PORTRAIT
+        } else if (orientation <= 315) {
+          LANDSCAPE
+        } else {
+          PORTRAIT
+        }
         forceSendChangeOrientation()
       }
     }
@@ -55,7 +63,6 @@ class RnOrientationModule(reactContext: ReactApplicationContext) :
   private val mReceiver: BroadcastReceiver = object : BroadcastReceiver() {
     override fun onReceive(context: Context, intent: Intent) {
       val newConfig: Configuration? = intent.getParcelableExtra("newConfig")
-      Log.d("receiver", newConfig?.orientation.toString())
       val orientationValue = if (newConfig?.orientation == 1) "PORTRAIT" else "LANDSCAPE"
       val params: WritableMap = Arguments.createMap()
       params.putString("eventProperty", orientationValue)
@@ -68,32 +75,15 @@ class RnOrientationModule(reactContext: ReactApplicationContext) :
   }
 
   init {
-    Log.i("RnInit", "Init");
     mReactContext.addLifecycleEventListener(this)
-    detectOrientationListener()
-
-    if (mTestOrientationListener.canDetectOrientation()) {
-      Log.i(ReactConstants.TAG, "orientation detect enabled.")
+    if (mOrientationListener.canDetectOrientation()) {
+      mOrientationListener.enable()
     } else {
-      Log.i(ReactConstants.TAG, "orientation detect disabled.")
+      mOrientationListener.disable()
     }
   }
 
   override fun getName() = PROJECT_NAME
-
-  // Example method
-  // See https://reactnative.dev/docs/native-modules-android
-  @ReactMethod
-  fun multiply(a: Double, b: Double, promise: Promise) {
-    promise.resolve(a * b)
-  }
-
-  @ReactMethod
-  fun sendEvent() {
-    val params = Arguments.createMap() // add here the data you want to send
-    params.putString("sessionId", "DummyId") // <- example
-    sendEventJsLand(mReactContext, "onSessionConnect", params)
-  }
 
   @ReactMethod
   fun enableScreenOrientation() {
@@ -114,19 +104,6 @@ class RnOrientationModule(reactContext: ReactApplicationContext) :
 
   private fun showToast(msg: String?) {
     Toast.makeText(reactApplicationContext, msg, Toast.LENGTH_SHORT).show()
-  }
-
-  private fun detectOrientationListener() {
-    mOrientationListener = OrientationListener(mReactContext, SensorManager.SENSOR_DELAY_UI)
-    mOrientationListener!!.setOrientationListener(object :
-      OrientationListener.OrientationReceiveListener {
-      @SuppressLint("LongLogTag")
-      override fun onOrientationReceived(orientation: Int) {
-        Log.i("detectOrientationListener", "$orientation");
-        showToast("Orientation Received : $orientation")
-        forceSendChangeOrientation()
-      }
-    })
   }
 
   private fun sendEventJsLand(mContext: ReactContext, eventName: String, params: WritableMap?) {
@@ -166,9 +143,7 @@ class RnOrientationModule(reactContext: ReactApplicationContext) :
   }
 
   override fun onHostResume() {
-    Log.i("RnResume", "Resume");
-    mOrientationListener!!.enable()
-    mTestOrientationListener.enable()
+    mOrientationListener.enable()
     forceSendChangeOrientation()
     val activity = currentActivity ?: return
     if (activity == null) {
@@ -179,8 +154,7 @@ class RnOrientationModule(reactContext: ReactApplicationContext) :
   }
 
   override fun onHostPause() {
-    Log.i("RnPause", "Pause");
-    mTestOrientationListener.disable()
+    mOrientationListener.disable()
     val activity = currentActivity ?: return
     try {
       activity.unregisterReceiver(mReceiver)
@@ -190,18 +164,18 @@ class RnOrientationModule(reactContext: ReactApplicationContext) :
   }
 
   override fun onHostDestroy() {
-    Log.i("RnDestroy", "Destroy");
-    mTestOrientationListener.disable()
-    TODO("Not yet implemented")
+    mOrientationListener.disable()
   }
 
   @ReactMethod
   fun addListener(eventName: String?) {
+    // eventName: String?
     // Keep: Required for RN built in Event Emitter Calls.
   }
 
   @ReactMethod
   fun removeListeners(count: Int) {
+    // count: Int
     // Keep: Required for RN built in Event Emitter Calls.
   }
 
