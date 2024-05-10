@@ -33,7 +33,7 @@ class RnOrientationModule(reactContext: ReactApplicationContext) :
   private var mOrientationListener: OrientationListener? = null
 
   private companion object {
-    const val PROJECT_NAME = "RnOrientation"
+    const val PROJECT_NAME = "com.rnorientation.forest/RnOrientation"
     const val LANDSCAPE = "LANDSCAPE"
     const val PORTRAIT = "PORTRAIT"
     const val UNKNOWN = "UNKNOWN"
