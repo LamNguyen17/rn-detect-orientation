@@ -30,6 +30,7 @@ class RnOrientationModule(reactContext: ReactApplicationContext) :
   private var lastOrientationValue = ""
   private var isLocked = false
   private val mReactContext = reactContext
+  private var mOrientationListener: OrientationListener? = null
 
   private companion object {
     const val PROJECT_NAME = "RnOrientation"
@@ -38,27 +39,6 @@ class RnOrientationModule(reactContext: ReactApplicationContext) :
     const val UNKNOWN = "UNKNOWN"
     const val ORIENTATION_DID_UPDATE = "orientationDidUpdate"
   }
-
-  private val mOrientationListener =
-    object : OrientationEventListener(mReactContext, SensorManager.SENSOR_DELAY_UI) {
-      override fun onOrientationChanged(orientation: Int) {
-        if (orientation < 0) {
-          return  // Flip screen, Not take account
-        }
-        lastOrientationValue = if (orientation <= 45) {
-          PORTRAIT
-        } else if (orientation <= 135) {
-          LANDSCAPE
-        } else if (orientation <= 225) {
-          PORTRAIT
-        } else if (orientation <= 315) {
-          LANDSCAPE
-        } else {
-          PORTRAIT
-        }
-        forceSendChangeOrientation()
-      }
-    }
 
   private val mReceiver: BroadcastReceiver = object : BroadcastReceiver() {
     override fun onReceive(context: Context, intent: Intent) {
@@ -76,11 +56,7 @@ class RnOrientationModule(reactContext: ReactApplicationContext) :
 
   init {
     mReactContext.addLifecycleEventListener(this)
-    if (mOrientationListener.canDetectOrientation()) {
-      mOrientationListener.enable()
-    } else {
-      mOrientationListener.disable()
-    }
+    detectOrientationListener()
   }
 
   override fun getName() = PROJECT_NAME
@@ -91,6 +67,26 @@ class RnOrientationModule(reactContext: ReactApplicationContext) :
     activity.requestedOrientation = ActivityInfo.SCREEN_ORIENTATION_SENSOR
     isLocked = false
     forceSendChangeOrientation()
+  }
+
+  private fun detectOrientationListener() {
+    mOrientationListener = OrientationListener(mReactContext, SensorManager.SENSOR_DELAY_UI)
+    mOrientationListener!!.setOrientationListener(object :
+      OrientationListener.OrientationReceiveListener {
+      override fun onOrientationReceived(orientation: Int) {
+        when (orientation) {
+          0, 2 -> PORTRAIT
+          1, 3 -> LANDSCAPE
+          else -> UNKNOWN
+        }
+        forceSendChangeOrientation()
+      }
+    })
+    if (mOrientationListener?.canDetectOrientation() == true) {
+      mOrientationListener?.enable()
+    } else {
+      mOrientationListener?.disable()
+    }
   }
 
   private fun forceSendChangeOrientation() {
@@ -143,7 +139,7 @@ class RnOrientationModule(reactContext: ReactApplicationContext) :
   }
 
   override fun onHostResume() {
-    mOrientationListener.enable()
+    mOrientationListener?.enable()
     forceSendChangeOrientation()
     val activity = currentActivity ?: return
     if (activity == null) {
@@ -154,7 +150,7 @@ class RnOrientationModule(reactContext: ReactApplicationContext) :
   }
 
   override fun onHostPause() {
-    mOrientationListener.disable()
+    mOrientationListener?.disable()
     val activity = currentActivity ?: return
     try {
       activity.unregisterReceiver(mReceiver)
@@ -164,7 +160,7 @@ class RnOrientationModule(reactContext: ReactApplicationContext) :
   }
 
   override fun onHostDestroy() {
-    mOrientationListener.disable()
+    mOrientationListener?.disable()
   }
 
   @ReactMethod
