@@ -27,7 +27,7 @@ import com.facebook.react.modules.core.DeviceEventManagerModule
 
 class RnOrientationModule(reactContext: ReactApplicationContext) :
   ReactContextBaseJavaModule(reactContext), LifecycleEventListener {
-  private var lastOrientationValue = ""
+  private var lastOrientation = ""
   private var isLocked = false
   private val mReactContext = reactContext
   private var mOrientationListener: OrientationListener? = null
@@ -38,20 +38,6 @@ class RnOrientationModule(reactContext: ReactApplicationContext) :
     const val PORTRAIT = "PORTRAIT"
     const val UNKNOWN = "UNKNOWN"
     const val ORIENTATION_DID_UPDATE = "orientationDidUpdate"
-  }
-
-  private val mReceiver: BroadcastReceiver = object : BroadcastReceiver() {
-    override fun onReceive(context: Context, intent: Intent) {
-      val newConfig: Configuration? = intent.getParcelableExtra("newConfig")
-      val orientationValue = if (newConfig?.orientation == 1) "PORTRAIT" else "LANDSCAPE"
-      val params: WritableMap = Arguments.createMap()
-      params.putString("eventProperty", orientationValue)
-      if (mReactContext.hasActiveCatalystInstance()) {
-        mReactContext
-          .getJSModule(DeviceEventManagerModule.RCTDeviceEventEmitter::class.java)
-          .emit("orientationDidChange", params)
-      }
-    }
   }
 
   init {
@@ -90,9 +76,9 @@ class RnOrientationModule(reactContext: ReactApplicationContext) :
   }
 
   private fun forceSendChangeOrientation() {
-    lastOrientationValue = getCurrentOrientation()
+    lastOrientation = getCurrentOrientation()
     val params = Arguments.createMap()
-    params.putString("orientation", lastOrientationValue)
+    params.putString("orientation", lastOrientation)
     if (mReactContext.hasActiveCatalystInstance()) {
       sendEventJsLand(mReactContext, ORIENTATION_DID_UPDATE, params)
     }
@@ -141,22 +127,10 @@ class RnOrientationModule(reactContext: ReactApplicationContext) :
   override fun onHostResume() {
     mOrientationListener?.enable()
     forceSendChangeOrientation()
-    val activity = currentActivity ?: return
-    if (activity == null) {
-      FLog.e(ReactConstants.TAG, "no activity to register receiver");
-      return;
-    }
-    activity.registerReceiver(mReceiver, IntentFilter("onConfigurationChanged"));
   }
 
   override fun onHostPause() {
     mOrientationListener?.disable()
-    val activity = currentActivity ?: return
-    try {
-      activity.unregisterReceiver(mReceiver)
-    } catch (e: IllegalArgumentException) {
-      FLog.e(ReactConstants.TAG, "receiver already unregistered", e)
-    }
   }
 
   override fun onHostDestroy() {

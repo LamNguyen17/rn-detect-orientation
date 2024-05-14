@@ -1,13 +1,13 @@
 import { useEffect, useState } from 'react';
-import { StyleSheet, View, Text, NativeEventEmitter, NativeModules, Button } from 'react-native';
-import Orientation from 'rn-detect-orientation';
+import { StyleSheet, View, Text, Button } from 'react-native';
+import Orientation, { multiply } from 'rn-detect-orientation';
 import { useDeviceOrientationChange } from './useDeviceOrientationChange';
 
 export default function App() {
-  const [result, setResult] = useState<number|undefined>();
+  const [result, setResult] = useState<number | undefined>();
   const [orient, setOrient] = useState<string>();
   const [isLocked, setLocked] = useState<boolean>(false);
-  const [sendValue, setValue] = useState<string|null>(null);
+  const [sendValue, setValue] = useState<string | null>(null);
 
   useDeviceOrientationChange((event) => {
     setOrient(`${event}`);
@@ -31,11 +31,6 @@ export default function App() {
     setOrient(`${initialOrientation}`);
   }, []);
 
-  const onSessionConnect = (event) => {
-    console.log('EventReminder_1:', event);
-    setValue(event);
-  };
-
   const checkLocked = () => {
     const locked = Orientation.isLocked();
     if (locked !== isLocked) {
@@ -51,6 +46,12 @@ export default function App() {
         checkLocked();
       }}
               title={'Enable Screen Orientation'}>
+      </Button>
+      <Button onPress={() => {
+        Orientation.requestDisableOrientations();
+        checkLocked();
+      }}
+              title={'Disable Screen Orientation'}>
       </Button>
     </View>
   );

@@ -20,6 +20,10 @@ const RnOrientationNative = NativeModules.RnOrientation
   );
 const eventEmitter = new NativeEventEmitter(RnOrientationNative);
 
+// export function multiply(a: number, b: number): Promise<number> {
+//   return RnOrientationNative.multiply(a, b);
+// }
+
 export default class Orientation {
   static isLocked = () => {
     return isOrientationLocked;
@@ -37,8 +41,13 @@ export default class Orientation {
   };
 
   static requestEnableOrientations = () => {
-    isOrientationLocked = false;
+    isOrientationLocked = true;
     return RnOrientationNative.enableScreenOrientation();
+  };
+
+  static requestDisableOrientations = () => {
+    isOrientationLocked = false;
+    return RnOrientationNative.disableScreenOrientation();
   };
 
   static addOrientationListener = (cb: any) => {
