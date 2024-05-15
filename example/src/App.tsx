@@ -1,25 +1,58 @@
-import * as React from 'react';
-
-import { StyleSheet, View, Text } from 'react-native';
-import Orientation, { multiply } from 'rn-orientation';
+import { useEffect, useState } from 'react';
+import { StyleSheet, View, Text, Button } from 'react-native';
+import Orientation, { multiply } from 'rn-detect-orientation';
+import { useDeviceOrientationChange } from './useDeviceOrientationChange';
 
 export default function App() {
-  const [result, setResult] = React.useState<number | undefined>();
-  const [orient, setOrient] = React.useState<string>();
+  const [result, setResult] = useState<number | undefined>();
+  const [orient, setOrient] = useState<string>();
+  const [isLocked, setLocked] = useState<boolean>(false);
+  const [sendValue, setValue] = useState<string | null>(null);
 
-  React.useEffect(() => {
-    multiply(3, 7).then(setResult);
+  useDeviceOrientationChange((event) => {
+    setOrient(`${event}`);
+  });
+
+  useEffect(() => {
+    Orientation.addOrientationListener(onOrientationDidUpdate);
+    return () => {
+      Orientation.removeOrientationListener();
+    };
   }, []);
 
-  React.useEffect(() => {
+  const onOrientationDidUpdate = (event) => {
+    console.log('onOrientationDidUpdate:', event);
+    setOrient(`${event}`);
+  };
+
+  useEffect(() => {
     let initialOrientation = Orientation.getInitialOrientation();
+    console.log('initialOrientation:', initialOrientation);
     setOrient(`${initialOrientation}`);
   }, []);
 
+  const checkLocked = () => {
+    const locked = Orientation.isLocked();
+    if (locked !== isLocked) {
+      setLocked(locked);
+    }
+  };
+
   return (
     <View style={styles.container}>
-      <Text>Result: {result}</Text>
       <Text>Result: {orient}</Text>
+      <Button onPress={() => {
+        Orientation.requestEnableOrientations();
+        checkLocked();
+      }}
+              title={'Enable Screen Orientation'}>
+      </Button>
+      <Button onPress={() => {
+        Orientation.requestDisableOrientations();
+        checkLocked();
+      }}
+              title={'Disable Screen Orientation'}>
+      </Button>
     </View>
   );
 }
