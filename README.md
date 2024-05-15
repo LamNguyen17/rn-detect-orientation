@@ -1,4 +1,7 @@
 # React Native Orientation
+[![](https://img.shields.io/badge/yarn-v1.0.0-blue)](https://www.npmjs.com/package/rn-detect-orientation)
+[![](https://img.shields.io/badge/native_language-Kotlin_&_Swift-green)](https://www.npmjs.com/package/rn-detect-orientation)
+[![](https://img.shields.io/badge/size-35.2_kB-red)](https://www.npmjs.com/package/rn-detect-orientation)
 
 Curently, works on Android and IOS
 
