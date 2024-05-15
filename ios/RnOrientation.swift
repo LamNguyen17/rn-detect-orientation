@@ -13,7 +13,7 @@ class RnOrientation: RCTEventEmitter {
     private var count = 0
     private var window: UIWindow?
     private var orientationLock = UIInterfaceOrientationMask.portrait // Default to portrait
-    
+
     public override init() {
         super.init()
         EventEmitter.shared.registerEventEmitter(eventEmitter: self)
@@ -26,38 +26,30 @@ class RnOrientation: RCTEventEmitter {
         NotificationCenter.default.removeObserver(self, name: UIDevice.orientationDidChangeNotification, object: nil)
     }
     
-    private func dispatch(event: EventType, body: Any? = nil) {
+    private func sendEventJsLand(event: EventType, body: Any? = nil) {
         EventEmitter.shared.dispatch(event: event, body: body)
     }
-    
     
     @objc func orientationDidUpdate(_ notification: Notification) {
         let orientation = getInterfaceOrientation()
         let orientationStr = getCurrentOrientation(orientation)
         lastOrientation = orientationStr
-        dispatch(event: EventType.ORIENTATION_DID_UPDATE, body: ["orientation" : lastOrientation])
+        sendEventJsLand(event: EventType.ORIENTATION_DID_UPDATE, body: ["orientation" : lastOrientation])
         print("Notification", orientationStr)
     }
     
-    @available(iOS 16.0, *)
     @objc
     func disableScreenOrientation() {
-        isLocked = false
         DispatchQueue.main.async {
-            guard let windowScene = UIApplication.shared.connectedScenes.first as? UIWindowScene else {
-                return
-            }
-            let geometryPreferences = UIWindowScene.GeometryPreferences.iOS(interfaceOrientations: .landscape)
-            windowScene.requestGeometryUpdate(geometryPreferences) { error in}
+            self.lockToOrientation(.portrait, usingMask: .allButUpsideDown)
         }
     }
     
     @objc
     func enableScreenOrientation() {
-        isLocked = true
-        let value = UIInterfaceOrientationMask.all.rawValue
-        print("UIInterfaceOrientationMask: ", value)
-        UIDevice.current.setValue(value, forKey: "orientation")
+        DispatchQueue.main.async {
+            self.lockToOrientation(.unknown, usingMask: .all)
+        }
     }
     
     //     @objc(multiply:withB:withResolver:withRejecter:)
@@ -65,19 +57,23 @@ class RnOrientation: RCTEventEmitter {
     //         resolve(a*b)
     //     }
     
-    //     Optional: override to allow rotating to a specific orientation
-    
-//    func lockOrientation(_ orientation: UIInterfaceOrientationMask) {
-//        self.orientationLock = orientation
-//    }
-//    func lockOrientation(_ orientation: UIInterfaceOrientationMask, andRotateTo rotateOrientation: UIInterfaceOrientation) {
-//        self.orientationLock = orientation
-//        UIDevice.current.setValue(rotateOrientation.rawValue, forKey: "orientation")
-//        UINavigationController.attemptRotationToDeviceOrientation()
-//    }
-    
-    private func emit(event: EventType, body: Any? = nil) {
-        EventEmitter.shared.dispatch(event: event, body: body)
+    private func lockToOrientation(_ newOrientation: UIInterfaceOrientation, usingMask mask: UIInterfaceOrientationMask) {
+        isLocked = true
+        if #available(iOS 16.0, *) {
+            guard let windowScene = UIApplication.shared.connectedScenes.first as? UIWindowScene else {
+                isLocked = false
+                return
+            }
+            let geometryPreferences = UIWindowScene.GeometryPreferences.iOS(interfaceOrientations: mask)
+            windowScene.requestGeometryUpdate(geometryPreferences) { error in
+                print("Failed to update geometry with UIInterfaceOrientationMask: \(error)")
+            }
+        } else {
+            UIDevice.current.setValue(newOrientation.rawValue, forKey: "orientation")
+        }
+        UIViewController.attemptRotationToDeviceOrientation()
+        //      dispatch(event: EventType.ORIENTATION_DID_UPDATE, body: ["orientation": getCurrentOrientation(newOrientation)])
+        isLocked = false
     }
     
     func getInterfaceOrientation() -> UIInterfaceOrientation {
